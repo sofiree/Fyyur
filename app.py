@@ -6,7 +6,7 @@ import json
 from urllib import response
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -255,25 +255,35 @@ def create_venue_submission():
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
+  venue = Venue.query.filter(Venue.id == venue_id).one_or_none()
+  if venue is None:
+        abort(404)
+
+  venue = venue.serialize
+  form = VenueForm(data=venue)
+
   # TODO: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
+  form = VenueForm(request.form)
+  try:
+        venue = Venue.query.filter(Venue.id==venue_id).one()
+        venue.name = form.name.data,
+        venue.address = form.address.data,
+        venue.genres = '.'.join(form.genres.data),  # array json
+        venue.city = form.city.data,
+        venue.state = form.state.data,
+        venue.phone = form.phone.data,
+        venue.facebook_link = form.facebook_link.data,
+        venue.image_link = form.image_link.data,
+        venue.update()
+        # on successful db insert, flash success
+        flash('Venue ' + request.form['name'] + ' was successfully updated!')
+  except Exception as e:
+        flash('An error occurred. Venue ' +
+              request.form['name'] + ' could not be updated.')
   # TODO: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
   return redirect(url_for('show_venue', venue_id=venue_id))
@@ -366,12 +376,36 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   form = ArtistForm()
-  artist = Artist.query.filter(Artist.id == artist_id).first()
+  artist = Artist.query.filter(Artist.id == artist_id).one_or_none()
+  if artist is None:
+        abort(404)
+
+  artist = artist.serialize
+  form = ArtistForm(data=artist)
   return render_template('forms/edit_artist.html', form=form, artist=artist)
+
 
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
+  form = ArtistForm(request.form)
+  try:
+        artist = Artist.query.filter(Artist.id==artist_id).one()
+        artist.name = form.name.data,
+        artist.genres = '.'.join(form.genres.data),  # array json
+        artist.city = form.city.data,
+        artist.state = form.state.data,
+        artist.phone = form.phone.data,
+        artist.facebook_link = form.facebook_link.data,
+        artist.image_link = form.image_link.data,
+        artist.update()
+        # on successful db insert, flash success
+        flash('Artist ' + request.form['name'] + ' was successfully updated!')
+  except Exception as e:
+        flash('An error occurred. Artist ' +
+              request.form['name'] + ' could not be updated.')
+
+
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
 
