@@ -180,8 +180,8 @@ def create_venue_submission():
   new_venue.image_link=request.form['image_link']
   new_venue.facebook_link=request.form['facebook_link']
   new_venue.website=request.form['website']
-  # venue.seeking_talent=json.loads(request.form['seeking_talent'].lower()),
-  # venue.seeking_description=request.form['seeking_description']
+  new_venue.seeking_talent=json.loads(request.form['seeking_talent'].lower()),
+  new_venue.seeking_description=request.form['seeking_description']
   
   try:
     db.session.add(new_venue)
